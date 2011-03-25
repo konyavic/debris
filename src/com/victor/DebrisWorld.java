@@ -19,58 +19,59 @@ public class DebrisWorld {
 	Vector<Body> debrisList = new Vector<Body>();
 	Body wall;
 	Box2DDebugRenderer debug = new Box2DDebugRenderer();
+	float debrisCount = DEBRIS_SPEED;
 	
 	
-	public final int WIDTH = 960;
-	public final int HEIGHT = 800;
+	public static final int WIDTH = 480;
+	public static final int HEIGHT = 800;
+	public static final int MAX_DEBRIS_SIZE = 25;
+	public static final int MIN_DEBRIS_SIZE = 15;
+	public static final float DEBRIS_SPEED = 1f; // secs per fall 
 
 	public void reset() {
 		Vector2 gravity = new Vector2(0.0f, -10.0f);
 		world = new World(gravity, true);
 		// world.setContactListener(this);
+		createFloor();
+		createLeftWall();
+		createRightWall();
 	}
 
 	public void start() {
-		PolygonShape debrisshape = new PolygonShape();
-		Vector2[] vlist = { new Vector2(0f, 0f), new Vector2(2f, -10f),
-				new Vector2(10f, 0f) };
-		debrisshape.set(vlist);
-
-		FixtureDef fd = new FixtureDef();
-		fd.shape = debrisshape;
-		fd.density = 1.0f;
-		fd.friction = 0.3f;
-		fd.restitution = 0.6f;
-
-		BodyDef bd = new BodyDef();
-		// bd.isBullet = true;
-		bd.allowSleep = true;
-		bd.position.set(50.0f, 200.0f);
-		Body body = world.createBody(bd);
-		body.createFixture(fd);
-
-		// body.setType(BodyDef.BodyType.StaticBody);
-		body.setType(BodyDef.BodyType.DynamicBody);
-		debrisList.add(body);
-
-		createFloor();
-
-		createDebrisBox(100, 200, 15, 15, 0, 0, 0);
-		createDebrisTriangle(150, 200, 30);
-		createDebrisCircle(200, 200, 12);
 	}
 
 	public void tick(long msecs, int iters) {
 		float dt = (msecs / 1000.0f) / iters;
-
 		for (int i = 0; i < iters; i++) {
 			world.step(dt, 10, 10);
 		}
-
+		
+		debrisCount += dt;
+		if (debrisCount >= DEBRIS_SPEED) {
+			debrisCount = 0f;
+			createDebrisRandom();
+		}
 	}
 
 	public Vector<Body> getDebrisList() {
 		return debrisList;
+	}
+	
+	public void createDebrisRandom() {
+		int size = MIN_DEBRIS_SIZE 
+			+ (int) (Math.random() * (MAX_DEBRIS_SIZE - MIN_DEBRIS_SIZE));
+		int x = (-WIDTH/2 + 30)
+			+ (int) (Math.random() * (WIDTH - 60));
+		
+		int type = (int) (Math.random() * 3);
+		
+		if (type == 0) {
+			createDebrisBox(x, HEIGHT, size, size, 0, 0, 0);
+		} else if (type == 1) {
+			createDebrisTriangle(x, HEIGHT, size);
+		} else if (type == 2) {
+			createDebrisCircle(x, HEIGHT, size);
+		}
 	}
 
 	public Body createDebrisBox(int x, int y, int w, int h, int cx, int cy,
@@ -106,7 +107,7 @@ public class DebrisWorld {
 		fd.shape = shape;
 		fd.density = 1.0f;
 		fd.friction = 0.3f;
-		fd.restitution = 0.6f;
+		fd.restitution = 0f;
 
 		Body body = world.createBody(bd);
 		body.createFixture(fd);
@@ -117,7 +118,7 @@ public class DebrisWorld {
 	
 	public void createFloor() {
 		PolygonShape wallshape = new PolygonShape();
-		wallshape.setAsBox(600f, 10f, new Vector2(0f, 0f), 0f);
+		wallshape.setAsBox(WIDTH/2f, 15f, new Vector2(0f, 0f), 0f);
 
 		FixtureDef fd = new FixtureDef();
 		fd.shape = wallshape;
@@ -129,6 +130,38 @@ public class DebrisWorld {
 		Body wall = world.createBody(bd);
 		wall.createFixture(fd);
 		wall.setType(BodyDef.BodyType.StaticBody);
+	}
+	
+	public void createLeftWall() {
+		PolygonShape wallshape = new PolygonShape();
+		wallshape.setAsBox(15f, HEIGHT/2f, new Vector2(0f, HEIGHT/2f), 0f);
+
+		FixtureDef fd = new FixtureDef();
+		fd.shape = wallshape;
+		fd.density = 1.0f;
+
+		BodyDef bd = new BodyDef();
+		bd.position.set(-WIDTH/2f, 0f);
+		
+		Body wall = world.createBody(bd);
+		wall.createFixture(fd);
+		wall.setType(BodyDef.BodyType.StaticBody);		
+	}
+	
+	public void createRightWall() {
+		PolygonShape wallshape = new PolygonShape();
+		wallshape.setAsBox(15f, HEIGHT/2f, new Vector2(0f, HEIGHT/2f), 0f);
+
+		FixtureDef fd = new FixtureDef();
+		fd.shape = wallshape;
+		fd.density = 1.0f;
+
+		BodyDef bd = new BodyDef();
+		bd.position.set(WIDTH/2f, 0f);
+		
+		Body wall = world.createBody(bd);
+		wall.createFixture(fd);
+		wall.setType(BodyDef.BodyType.StaticBody);		
 	}
 
 	public void renderDebug() {

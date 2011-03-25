@@ -7,13 +7,9 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL10;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.Mesh;
-import com.badlogic.gdx.graphics.VertexAttribute;
-import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 
 public class Debris extends InputAdapter implements ApplicationListener {
 	SpriteBatch spriteBatch;
@@ -21,8 +17,6 @@ public class Debris extends InputAdapter implements ApplicationListener {
 	Vector2 textPosition = new Vector2(100, 100);
 	Vector2 textDirection = new Vector2(1, 1);
 	DebrisWorld world;
-	OrthographicCamera camera;
-	Mesh squareMesh;
 	Vector2 lastPosition = null;
 	Matrix4 transform = new Matrix4();
 	int translation_x = 0;
@@ -39,28 +33,14 @@ public class Debris extends InputAdapter implements ApplicationListener {
 		world.start();
 		Gdx.input.setInputProcessor(this);
 		
-		transform.setToTranslation(world.WIDTH/2f, 0f, 0f);
-
-		squareMesh = new Mesh(true, 4, 4, new VertexAttribute(Usage.Position,
-				3, "a_position"), new VertexAttribute(Usage.ColorPacked, 4,
-				"a_color"));
-
-		squareMesh.setVertices(new float[] { -0.5f, -0.5f, -1,
-				Color.toFloatBits(128, 0, 0, 255), 0.5f, -0.5f, 1,
-				Color.toFloatBits(192, 0, 0, 255), -0.5f, 0.5f, -1,
-				Color.toFloatBits(192, 0, 0, 255), 0.5f, 0.5f, 1,
-				Color.toFloatBits(255, 0, 0, 255) });
-		squareMesh.setIndices(new short[] { 0, 1, 2, 3 });
+		//transform.setToTranslation(-DebrisWorld.WIDTH/4f, 0f, 0f);
 	}
 
 	@Override
 	public void render() {
-		world.tick((long) (Gdx.graphics.getDeltaTime() * 3000), 4);
+		world.tick((long) (Gdx.graphics.getDeltaTime() * 6000), 6);
 
-		camera.update();
-		camera.apply(Gdx.gl10);
 		Gdx.graphics.getGL10().glClear(GL10.GL_COLOR_BUFFER_BIT);
-		squareMesh.render(GL10.GL_TRIANGLE_STRIP, 0, 4);
 
 		// more fun but confusing :)
 		// textPosition.add(textDirection.tmp().mul(Gdx.graphics.getDeltaTime()).mul(60));
@@ -100,9 +80,6 @@ public class Debris extends InputAdapter implements ApplicationListener {
 
 	@Override
 	public void resize(int width, int height) {
-		float aspectRatio = (float) width / (float) height;
-		camera = new OrthographicCamera(2f * aspectRatio, 2f);
-
 		textPosition.set(0, 0);
 	}
 
@@ -142,7 +119,6 @@ public class Debris extends InputAdapter implements ApplicationListener {
 		
 		translation_x += x - (int) lastPosition.x;
 		transform.setToTranslation((float) translation_x, 0f, 0f);
-		camera.translate((lastPosition.x - x) / 100f, 0, 0);
 		lastPosition.x = (float) x;
 		lastPosition.y = (float) y;
 
