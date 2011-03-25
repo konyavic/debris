@@ -14,12 +14,13 @@ import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.Shape;
 import com.badlogic.gdx.physics.box2d.World;
 
-public class DebrisWorld {
+public class DebrisWorld implements ContactListener {
 	World world;
 	Vector<Body> debrisList = new Vector<Body>();
 	Body player;
 	Box2DDebugRenderer debug = new Box2DDebugRenderer();
 	float debrisCount = DEBRIS_SPEED;
+	int contactCount = 0;
 	
 	public static final int WIDTH = 480;
 	public static final int HEIGHT = 800;
@@ -30,11 +31,11 @@ public class DebrisWorld {
 	public void reset() {
 		Vector2 gravity = new Vector2(0.0f, -8.0f);
 		world = new World(gravity, true);
-		// world.setContactListener(this);
+		world.setContactListener(this);
+		
 		createFloor();
 		createLeftWall();
 		createRightWall();
-		
 		createPlayer();
 	}
 
@@ -67,9 +68,12 @@ public class DebrisWorld {
 		return player.getPosition();
 	}
 	
-	public boolean isPlayerStopped() {
-		Vector2 v = player.getLinearVelocity();
-		return (Math.abs(v.x) <= 100 && Math.abs(v.y) <= 0);
+	public Vector2 getPlayerVelocity() {
+		return player.getLinearVelocity();
+	}
+	
+	public boolean isPlayerJumpable() {
+		return contactCount > 0;
 	}
 	
 	public void createDebrisRandom() {
@@ -181,5 +185,21 @@ public class DebrisWorld {
 
 	public void renderDebug() {
 		debug.render(world);
+	}
+
+	@Override
+	public void beginContact(Contact contact) {
+		if (player == contact.getFixtureA().getBody()
+				|| player == contact.getFixtureB().getBody()) {
+			contactCount += 1;
+		}
+	}
+
+	@Override
+	public void endContact(Contact contact) {
+		if (player == contact.getFixtureA().getBody()
+				|| player == contact.getFixtureB().getBody()) {
+			contactCount -= 1;
+		}
 	}
 }
