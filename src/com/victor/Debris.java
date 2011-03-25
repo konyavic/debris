@@ -1,8 +1,5 @@
 package com.victor;
 
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.Gdx;
@@ -28,14 +25,18 @@ public class Debris extends InputAdapter implements ApplicationListener {
 	int translation_x = 0;
 
 	int width;
-	int height;
-	float tps;	// tick per second
+	int height;	
 
 	boolean jumping = false;
-	public static final float DEBRIS_SPEED = 1;	// secs per fall 
-	float debrisCount = DEBRIS_SPEED;
 	
-	Lock lock = new ReentrantLock();
+	public static final float DEBRIS_INTERVAL = 1000f;	// msecs per fall 
+	float timeFall = DEBRIS_INTERVAL;
+	
+	public static float MOVE_INTERVAL = 100f;	// apply force for msecs
+	float timeMove = 0;
+	
+	int countDebris = 5;
+	boolean stopped = false;
 
 	@Override
 	public void create() {
@@ -50,37 +51,41 @@ public class Debris extends InputAdapter implements ApplicationListener {
 
 		translation_x = (int) (DebrisWorld.WIDTH / 2f);
 		transform.setToTranslation(translation_x, 0f, 0f);
-
-		new Thread() {
-			public void run() {
-				while(true) {
-					try {
-						Thread.sleep(1);
-					} catch (InterruptedException e) {
-						System.err.println("Caught interrupt in tick-thread");
-					}
-					lock.lock();
-					world.tick();
-					lock.unlock();
-				}
-			}
-		}.start();
 	}
 
 	@Override
 	public void render() {
+		//
+		// Model
+		//
+		
+		float delta = Gdx.graphics.getDeltaTime() * 1000;	// in msecs
+		world.tick((long) (delta * 6), 6);
+		
+		if (timeMove >= 0 ) {
+			timeMove -= delta;
+			world.movePlayer(moveVector);
+		}
+		
+		// debris fall
+		timeFall += delta;
+		if (timeFall >= DEBRIS_INTERVAL && countDebris > 0) {
+			timeFall = 0f;
+			world.createDebrisRandom();
+			countDebris -= 1;	
+		}
+		
+		if (countDebris == 0 && !stopped) {
+			stopped = true;
+			world.createDebrisBox(0, 200, 20, 30, 0, 0, 0);
+		}
+		 
+		//
+		// View
+		//
+		
 		Gdx.graphics.getGL10().glClear(GL10.GL_COLOR_BUFFER_BIT);
 
-		// sync problem
-		lock.lock();
-		debrisCount += Gdx.graphics.getDeltaTime();
-		if (debrisCount >= DEBRIS_SPEED) {
-			debrisCount = 0f;
-			world.createDebrisRandom();
-		}
-		lock.unlock();
-		
-		
 		// center to player
 		Vector2 position = world.getPlayerPosition();
 		float translation = (float) -position.x + width / 2f;
@@ -102,9 +107,7 @@ public class Debris extends InputAdapter implements ApplicationListener {
 		spriteBatch.end();
 
 		// render debug shape
-		lock.lock();
 		world.renderDebug();
-		lock.unlock();
 	}
 
 	@Override
@@ -152,10 +155,10 @@ public class Debris extends InputAdapter implements ApplicationListener {
 			moveVector.x = (x - lastPosition.x); 
 			moveVector.y = -(y - lastPosition.y);
 			 
-			moveVector.x *= 1000f;
-			moveVector.y *= 1000f;
+			moveVector.x *= 250f;
+			moveVector.y *= 250f;
 			
-			world.movePlayer(moveVector);
+			timeMove = MOVE_INTERVAL;
 		}
 		
 		return false;

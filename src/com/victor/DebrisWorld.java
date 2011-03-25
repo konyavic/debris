@@ -37,8 +37,14 @@ public class DebrisWorld implements ContactListener {
 		createPlayer();
 	}
 
-	public void tick() {
-		world.step(0.02f, 10, 10);	
+	// public void tick() {
+	public void tick(long msecs, int iters) {
+		float dt = (msecs / 1000.0f) / iters;
+		for (int i = 0; i < iters; i++) {
+			world.step(dt, 10, 10);
+
+		}
+		//world.step(0.02f, 10, 10);
 	}
 
 	public Vector<Body> getDebrisList() {
