@@ -17,27 +17,25 @@ import com.badlogic.gdx.physics.box2d.World;
 public class DebrisWorld {
 	World world;
 	Vector<Body> debrisList = new Vector<Body>();
-	Body wall;
+	Body player;
 	Box2DDebugRenderer debug = new Box2DDebugRenderer();
 	float debrisCount = DEBRIS_SPEED;
-	
 	
 	public static final int WIDTH = 480;
 	public static final int HEIGHT = 800;
 	public static final int MAX_DEBRIS_SIZE = 25;
 	public static final int MIN_DEBRIS_SIZE = 15;
-	public static final float DEBRIS_SPEED = 1f; // secs per fall 
+	public static final float DEBRIS_SPEED = 2f; // secs per fall 
 
 	public void reset() {
-		Vector2 gravity = new Vector2(0.0f, -10.0f);
+		Vector2 gravity = new Vector2(0.0f, -8.0f);
 		world = new World(gravity, true);
 		// world.setContactListener(this);
 		createFloor();
 		createLeftWall();
 		createRightWall();
-	}
-
-	public void start() {
+		
+		createPlayer();
 	}
 
 	public void tick(long msecs, int iters) {
@@ -55,6 +53,23 @@ public class DebrisWorld {
 
 	public Vector<Body> getDebrisList() {
 		return debrisList;
+	}
+	
+	public void createPlayer() {
+		player = createDebrisBox(0, 100, 5, 10, 0, 0, 0);
+	}
+	
+	public void movePlayer(Vector2 force) {
+		player.applyForce(force, player.getWorldCenter());
+	}
+	
+	public Vector2 getPlayerPosition() {
+		return player.getPosition();
+	}
+	
+	public boolean isPlayerStopped() {
+		Vector2 v = player.getLinearVelocity();
+		return (Math.abs(v.x) <= 100 && Math.abs(v.y) <= 0);
 	}
 	
 	public void createDebrisRandom() {

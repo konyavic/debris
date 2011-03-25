@@ -16,10 +16,16 @@ public class Debris extends InputAdapter implements ApplicationListener {
 	BitmapFont font;
 	Vector2 textPosition = new Vector2(100, 100);
 	Vector2 textDirection = new Vector2(1, 1);
+	
 	DebrisWorld world;
+	
 	Vector2 lastPosition = null;
+	Vector2 moveVector = new Vector2();
+	
 	Matrix4 transform = new Matrix4();
 	int translation_x = 0;
+	
+	int width;
 
 	@Override
 	public void create() {
@@ -30,10 +36,10 @@ public class Debris extends InputAdapter implements ApplicationListener {
 
 		world = new DebrisWorld();
 		world.reset();
-		world.start();
 		Gdx.input.setInputProcessor(this);
 		
-		//transform.setToTranslation(-DebrisWorld.WIDTH/4f, 0f, 0f);
+		translation_x = (int) (DebrisWorld.WIDTH/2f);
+		transform.setToTranslation(translation_x, 0f, 0f);
 	}
 
 	@Override
@@ -64,6 +70,8 @@ public class Debris extends InputAdapter implements ApplicationListener {
 			textPosition.y = Gdx.graphics.getHeight();
 		}
 
+		Vector2 position = world.getPlayerPosition();
+		transform.setToTranslation((float) -position.x + width/2f, 0f, 0f);
 		spriteBatch.setTransformMatrix(transform);
 		spriteBatch.begin();
 		spriteBatch.setColor(Color.WHITE);
@@ -81,6 +89,7 @@ public class Debris extends InputAdapter implements ApplicationListener {
 	@Override
 	public void resize(int width, int height) {
 		textPosition.set(0, 0);
+		this.width = width;
 	}
 
 	@Override
@@ -100,28 +109,35 @@ public class Debris extends InputAdapter implements ApplicationListener {
 
 	@Override
 	public boolean touchDown(int x, int y, int pointer, int button) {
-		if (lastPosition == null) {
-			lastPosition = new Vector2((float) x, (float) y);
-		} else {
+		if (lastPosition != null) {
 			lastPosition.x = (float) x;
 			lastPosition.y = (float) y;
+		} else {
+			lastPosition = new Vector2((float) x, (float) y);
 		}
 		return false;
 	}
 
 	@Override
 	public boolean touchUp(int x, int y, int pointer, int button) {
+		if (!world.isPlayerStopped()) {
+			return false;
+		}
+		
+		moveVector.x = (x - lastPosition.x) * 100000;
+		moveVector.y = -(y - lastPosition.y) * 100000;
+		world.movePlayer(moveVector);
 		return false;
 	}
 
 	@Override
 	public boolean touchDragged(int x, int y, int pointer) {
-		
+		/*
 		translation_x += x - (int) lastPosition.x;
 		transform.setToTranslation((float) translation_x, 0f, 0f);
 		lastPosition.x = (float) x;
 		lastPosition.y = (float) y;
-
+		 */
 		return false;
 	}
 
