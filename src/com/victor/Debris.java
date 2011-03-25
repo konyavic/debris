@@ -29,6 +29,8 @@ public class Debris extends InputAdapter implements ApplicationListener {
 
 	boolean jumping = false;
 	
+	float countDown = 10000;	// 60 secs
+	
 	public static final float DEBRIS_INTERVAL = 1000f;	// msecs per fall 
 	float timeFall = DEBRIS_INTERVAL;
 	
@@ -37,6 +39,8 @@ public class Debris extends InputAdapter implements ApplicationListener {
 	
 	int countDebris = 5;
 	boolean stopped = false;
+	boolean isWin = false;
+	boolean isLose = false;
 
 	@Override
 	public void create() {
@@ -57,27 +61,37 @@ public class Debris extends InputAdapter implements ApplicationListener {
 	public void render() {
 		//
 		// Model
-		//
-		
-		float delta = Gdx.graphics.getDeltaTime() * 1000;	// in msecs
-		world.tick((long) (delta * 6), 6);
-		
-		if (timeMove >= 0 ) {
-			timeMove -= delta;
-			world.movePlayer(moveVector);
-		}
-		
-		// debris fall
-		timeFall += delta;
-		if (timeFall >= DEBRIS_INTERVAL && countDebris > 0) {
-			timeFall = 0f;
-			world.createDebrisRandom();
-			countDebris -= 1;	
-		}
-		
-		if (countDebris == 0 && !stopped) {
-			stopped = true;
-			world.createDebrisBox(0, 200, 20, 30, 0, 0, 0);
+		//	
+		if (!isWin && !isLose) {
+			float delta = Gdx.graphics.getDeltaTime() * 1000; // in msecs
+			countDown -= delta;
+			world.tick((long) (delta * 6), 6);
+
+			if (timeMove >= 0) {
+				timeMove -= delta;
+				world.movePlayer(moveVector);
+			}
+
+			// debris fall
+			timeFall += delta;
+			if (timeFall >= DEBRIS_INTERVAL && countDebris > 0) {
+				timeFall = 0f;
+				world.createDebrisRandom();
+				countDebris -= 1;
+			}
+
+			if (countDebris == 0 && !stopped) {
+				stopped = true;
+				world.createDoor();
+			}
+			
+			if (world.isWin()) {
+				isWin = true;
+			}
+			
+			if (countDown <= 0) {
+				isLose = true;
+			}
 		}
 		 
 		//
@@ -98,8 +112,17 @@ public class Debris extends InputAdapter implements ApplicationListener {
 		Vector2 v = world.getPlayerVelocity();
 		font.draw(spriteBatch, "v = " + v.len(), (int) -translation + 50,
 				(int) height - 50);
-		font.draw(spriteBatch, "fps =: " + Gdx.graphics.getFramesPerSecond(),
+		font.draw(spriteBatch, "fps = " + Gdx.graphics.getFramesPerSecond(),
 				(int) -translation + 50, (int) height - 70);
+		font.draw(spriteBatch, "time = " + countDown,
+				(int) -translation + 50, (int) height - 90);
+		if (isWin) {
+			font.draw(spriteBatch, "YOU WIN!",
+					(int) -translation + 50, (int) height - 110);
+		} else if (isLose) {
+			font.draw(spriteBatch, "YOU LOST!",
+					(int) -translation + 50, (int) height - 110);
+		}
 		/*
 		 * for (Body d : world.getDebrisList()) { Vector2 pos = d.getPosition();
 		 * font.draw(spriteBatch, "D", (int) pos.x, (int) pos.y); }
@@ -108,6 +131,7 @@ public class Debris extends InputAdapter implements ApplicationListener {
 
 		// render debug shape
 		world.renderDebug();
+		
 	}
 
 	@Override

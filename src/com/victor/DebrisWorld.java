@@ -18,8 +18,10 @@ public class DebrisWorld implements ContactListener {
 	World world;
 	Vector<Body> debrisList = new Vector<Body>();
 	Body player;
+	Body door;
 	Box2DDebugRenderer debug = new Box2DDebugRenderer();
 	int contactCount = 0;
+	boolean isWin = false;
 	
 	public static final int WIDTH = 480;
 	public static final int HEIGHT = 800;
@@ -86,6 +88,10 @@ public class DebrisWorld implements ContactListener {
 		} else if (type == 2) {
 			createDebrisCircle(x, HEIGHT, size);
 		}
+	}
+	
+	public void createDoor() {
+		door = createDebrisBox(0, HEIGHT, 20, 30, 0, 0, 0);
 	}
 
 	public Body createDebrisBox(int x, int y, int w, int h, int cx, int cy,
@@ -181,12 +187,21 @@ public class DebrisWorld implements ContactListener {
 	public void renderDebug() {
 		debug.render(world);
 	}
+	
+	public boolean isWin() {
+		return isWin;
+	}
 
 	@Override
 	public void beginContact(Contact contact) {
 		if (player == contact.getFixtureA().getBody()
 				|| player == contact.getFixtureB().getBody()) {
 			contactCount += 1;
+			if (door != null && 
+					(door == contact.getFixtureA().getBody()
+							|| door == contact.getFixtureB().getBody())) {
+				isWin = true;
+			}
 		}
 	}
 
