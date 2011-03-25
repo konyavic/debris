@@ -29,7 +29,7 @@ public class Debris extends InputAdapter implements ApplicationListener {
 
 	boolean jumping = false;
 	
-	float countDown = 10000;	// 60 secs
+	float countDown = 60000;	// 60 secs
 	
 	public static final float DEBRIS_INTERVAL = 1000f;	// msecs per fall 
 	float timeFall = DEBRIS_INTERVAL;
@@ -37,7 +37,7 @@ public class Debris extends InputAdapter implements ApplicationListener {
 	public static float MOVE_INTERVAL = 100f;	// apply force for msecs
 	float timeMove = 0;
 	
-	int countDebris = 5;
+	int countDebris = 30;
 	boolean stopped = false;
 	boolean isWin = false;
 	boolean isLose = false;
