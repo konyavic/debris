@@ -19,14 +19,12 @@ public class DebrisWorld implements ContactListener {
 	Vector<Body> debrisList = new Vector<Body>();
 	Body player;
 	Box2DDebugRenderer debug = new Box2DDebugRenderer();
-	float debrisCount = DEBRIS_SPEED;
 	int contactCount = 0;
 	
 	public static final int WIDTH = 480;
 	public static final int HEIGHT = 800;
 	public static final int MAX_DEBRIS_SIZE = 25;
 	public static final int MIN_DEBRIS_SIZE = 15;
-	public static final float DEBRIS_SPEED = 2f; // secs per fall 
 
 	public void reset() {
 		Vector2 gravity = new Vector2(0.0f, -8.0f);
@@ -39,17 +37,8 @@ public class DebrisWorld implements ContactListener {
 		createPlayer();
 	}
 
-	public void tick(long msecs, int iters) {
-		float dt = (msecs / 1000.0f) / iters;
-		for (int i = 0; i < iters; i++) {
-			world.step(dt, 10, 10);
-		}
-		
-		debrisCount += dt;
-		if (debrisCount >= DEBRIS_SPEED) {
-			debrisCount = 0f;
-			createDebrisRandom();
-		}
+	public void tick() {
+		world.step(0.02f, 10, 10);	
 	}
 
 	public Vector<Body> getDebrisList() {
