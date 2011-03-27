@@ -16,23 +16,31 @@ import com.badlogic.gdx.physics.box2d.World;
 
 public class DebrisWorld implements ContactListener {
 	World world;
-	Vector<Body> debrisList = new Vector<Body>();
+	Vector<Body> debrisList;
 	Body player;
 	Body door;
 	Box2DDebugRenderer debug = new Box2DDebugRenderer();
-	int contactCount = 0;
-	
-
+	int countContact;
+	int countDebris;
+	float timeDrop;
+	float timeLeft;
 	
 	public enum State {
 		WIN,
 		DEAD,
-		PLAYING
+		DROPPING,
+		STOPPED
 	}
 	
-	State state = State.PLAYING;
+	State state = State.DROPPING;
 
 	public void reset() {
+		debrisList = new Vector<Body>();
+		countContact = 0;
+		countDebris = 0;
+		timeDrop = 0f;
+		timeLeft = DebrisParam.TIME_LIMIT;
+		
 		Vector2 gravity = new Vector2(0.0f, DebrisParam.GRAVITY);
 		world = new World(gravity, true);
 		world.setContactListener(this);
@@ -43,17 +51,43 @@ public class DebrisWorld implements ContactListener {
 		createPlayer();
 	}
 
-	// public void tick() {
 	public void tick(float delta) {
-		/*
-		delta *= 10;
-		float dt = (delta / 1000.0f) / DebrisParam.TICK_ITER;
-		for (int i = 0; i < DebrisParam.TICK_ITER; i++) {
+		if (state == State.WIN || state == State.DEAD)
+			return;
+		
+		timeDrop += delta;
+		timeLeft -= delta;
+		
+		if (timeLeft <= 0f) {
+			state = State.DEAD;
+		}
+		
+		if (timeDrop >= DebrisParam.DROP_INTERVAL
+				&& countDebris < DebrisParam.MAX_DEBRIS) {
+			timeDrop = 0f;
+			countDebris ++;
+			Body body = createDebrisRandom();
+			debrisList.add(body);
+			/*
+			if (countFreeze >= 0) {
+				world.getDebrisList().get(countFreeze).setType(BodyDef.BodyType.StaticBody);
+			}
+			countFreeze += 1;
+			*/
+		}
+
+		if (countDebris == DebrisParam.MAX_DEBRIS 
+				&& state != State.STOPPED) {
+			state = State.STOPPED;
+			createDoor();
+		}
+
+		int adjustIter = 1 + (int) (delta / (1000f/DebrisParam.FPS));
+		float dt = (delta/1000f) / adjustIter;
+		int i;
+		for(i = 0; i < adjustIter; ++i) {
 			world.step(dt, 10, 10);
 		}
-		*/
-		
-		world.step(delta/1000f, 10, 10);
 	}
 
 	public Vector<Body> getDebrisList() {
@@ -78,10 +112,10 @@ public class DebrisWorld implements ContactListener {
 	}
 	
 	public boolean isPlayerJumpable() {
-		return contactCount > 0;
+		return countContact > 0;
 	}
 	
-	public void createDebrisRandom() {
+	public Body createDebrisRandom() {
 		// randomize size
 		int dice = (int)(Math.random() * DebrisParam.DEBRIS_PROB_MAX);
 		int i;
@@ -93,8 +127,8 @@ public class DebrisWorld implements ContactListener {
 		float size = DebrisParam.DEBRIS_SIZE[i];
 		
 		// randomize drop position
-		float x = (-DebrisParam.STAGE_WIDTH/2 + 30)
-			+ (int) (Math.random() * (DebrisParam.STAGE_WIDTH - 60));
+		float x = -DebrisParam.STAGE_WIDTH / 2f
+			+ (float) (Math.random() * (DebrisParam.STAGE_WIDTH - DebrisParam.WALL_WIDTH));
 		
 		// randomize shape
 		int type = (int) (Math.random() * 3);
@@ -109,11 +143,15 @@ public class DebrisWorld implements ContactListener {
 			// should not reach here
 		}
 		
-		debrisList.add(body);
+		return body;
 	}
 	
 	public void createDoor() {
-		door = createDebrisBox(0, DebrisParam.STAGE_HEIGHT, 20, 30, 0, 0, 0);
+		door = createDebrisBox(0, 
+				DebrisParam.STAGE_HEIGHT, 
+				DebrisParam.DOOR_WIDTH, 
+				DebrisParam.DOOR_HEIGHT, 
+				0, 0, 0);
 	}
 
 	public Body createDebrisBox(float x, float y, float w, float h, float cx, float cy,
@@ -160,7 +198,10 @@ public class DebrisWorld implements ContactListener {
 	
 	public void createFloor() {
 		PolygonShape wallshape = new PolygonShape();
-		wallshape.setAsBox(DebrisParam.STAGE_WIDTH/2f, DebrisParam.WALL_WIDTH, new Vector2(0f, 0f), 0f);
+		wallshape.setAsBox(
+				DebrisParam.STAGE_WIDTH/2f, 
+				DebrisParam.WALL_WIDTH, 
+				new Vector2(0f, 0f), 0f);
 
 		FixtureDef fd = new FixtureDef();
 		fd.shape = wallshape;
@@ -176,7 +217,10 @@ public class DebrisWorld implements ContactListener {
 	
 	public void createLeftWall() {
 		PolygonShape wallshape = new PolygonShape();
-		wallshape.setAsBox(DebrisParam.WALL_WIDTH, DebrisParam.STAGE_HEIGHT/2f, new Vector2(0f, DebrisParam.STAGE_HEIGHT/2f), 0f);
+		wallshape.setAsBox(
+				DebrisParam.WALL_WIDTH, 
+				DebrisParam.WALL_HEIGHT/2f, 
+				new Vector2(0f, DebrisParam.WALL_HEIGHT/2f), 0f);
 
 		FixtureDef fd = new FixtureDef();
 		fd.shape = wallshape;
@@ -192,7 +236,10 @@ public class DebrisWorld implements ContactListener {
 	
 	public void createRightWall() {
 		PolygonShape wallshape = new PolygonShape();
-		wallshape.setAsBox(DebrisParam.WALL_WIDTH, DebrisParam.STAGE_HEIGHT/2f, new Vector2(0f, DebrisParam.STAGE_HEIGHT/2f), 0f);
+		wallshape.setAsBox(
+				DebrisParam.WALL_WIDTH, 
+				DebrisParam.WALL_HEIGHT/2f, 
+				new Vector2(0f, DebrisParam.WALL_HEIGHT/2f), 0f);
 
 		FixtureDef fd = new FixtureDef();
 		fd.shape = wallshape;
@@ -213,12 +260,18 @@ public class DebrisWorld implements ContactListener {
 	public State getState() {
 		return state;
 	}
+	
+	public float getTimeLeft() {
+		return timeLeft;
+	}
 
 	@Override
 	public void beginContact(Contact contact) {
+		// if the player hits something
 		if (player == contact.getFixtureA().getBody()
 				|| player == contact.getFixtureB().getBody()) {
-			contactCount += 1;
+			countContact += 1;
+			// if the player hits the door
 			if (door != null && 
 					(door == contact.getFixtureA().getBody()
 							|| door == contact.getFixtureB().getBody())) {
@@ -229,9 +282,10 @@ public class DebrisWorld implements ContactListener {
 
 	@Override
 	public void endContact(Contact contact) {
+		// if the player left something
 		if (player == contact.getFixtureA().getBody()
 				|| player == contact.getFixtureB().getBody()) {
-			contactCount -= 1;
+			countContact -= 1;
 		}
 	}
 }
