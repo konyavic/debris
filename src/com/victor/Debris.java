@@ -11,10 +11,11 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 
 public class Debris extends InputAdapter implements ApplicationListener {
 
-	SpriteBatch spriteBatch;
+	SpriteBatch batch;
 	BitmapFont font;
 
 	DebrisWorld world;
@@ -24,6 +25,8 @@ public class Debris extends InputAdapter implements ApplicationListener {
 
 	Matrix4 transform = new Matrix4();
 	int translation_x = 0;
+	
+	OrthographicCamera camera;
 
 	int width;
 	int height;	
@@ -49,7 +52,10 @@ public class Debris extends InputAdapter implements ApplicationListener {
 		font = new BitmapFont();
 		font.setColor(Color.WHITE);
 		// texture = new Texture(Gdx.files.internal("data/badlogic.jpg"));
-		spriteBatch = new SpriteBatch();
+		batch = new SpriteBatch();
+		
+		camera = new OrthographicCamera(30, 50);
+		camera.position.set(0, 0, 0);
 
 		world = new DebrisWorld();
 		world.reset();
@@ -109,41 +115,53 @@ public class Debris extends InputAdapter implements ApplicationListener {
 		// View
 		//
 		
-		Gdx.graphics.getGL10().glClear(GL10.GL_COLOR_BUFFER_BIT);
+		GL10 gl = Gdx.app.getGraphics().getGL10();
+        gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+        
+        camera.update();
+        camera.apply(gl);
 
 		// center to player
 		Vector2 position = world.getPlayerPosition();
 		float translation = (float) -position.x + width / 2f;
 		transform.setToTranslation(translation, 0f, 0f);
-		spriteBatch.setTransformMatrix(transform);
-
+		//spriteBatch.setTransformMatrix(transform);
+		camera.position.set(position.x, 15f, 0);
 		// render
-		spriteBatch.begin();
-		spriteBatch.setColor(Color.WHITE);
-		Vector2 v = world.getPlayerVelocity();
-		font.draw(spriteBatch, "delta = " + String.format("%.2f", delta), 
-				(int) -translation + 50, (int) height - 50);
-		font.draw(spriteBatch, "sleep = " + String.format("%.2f", sleep), 
-				(int) -translation + 150, (int) height - 50);
-		font.draw(spriteBatch, "fps = " + Gdx.graphics.getFramesPerSecond(),
-				(int) -translation + 50, (int) height - 70);
-		font.draw(spriteBatch, "time = " + String.format("%.2f", countDown/1000f),
-				(int) -translation + 50, (int) height - 90);
-		if (isWin) {
-			font.draw(spriteBatch, "YOU WIN!",
-					(int) -translation + 50, (int) height - 110);
-		} else if (isLose) {
-			font.draw(spriteBatch, "YOU LOST!",
-					(int) -translation + 50, (int) height - 110);
-		}
+		//batch.getProjectionMatrix().set(camera.combined);
+		//batch.begin();
+		
+		
+		
 		/*
 		 * for (Body d : world.getDebrisList()) { Vector2 pos = d.getPosition();
 		 * font.draw(spriteBatch, "D", (int) pos.x, (int) pos.y); }
 		 */
-		spriteBatch.end();
+		//batch.end();
 
 		// render debug shape
 		world.renderDebug();
+
+		batch.getProjectionMatrix().setToOrtho2D(0,0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+		batch.begin();
+		batch.setColor(Color.WHITE);
+		Vector2 v = world.getPlayerVelocity();
+		font.draw(batch, "delta = " + String.format("%.2f", delta), 
+				10, (int) height - 50);
+		font.draw(batch, "sleep = " + String.format("%.2f", sleep), 
+				200, (int) height - 50);
+		font.draw(batch, "fps = " + Gdx.graphics.getFramesPerSecond(),
+				10, (int) height - 70);
+		font.draw(batch, "time = " + String.format("%.2f", countDown/1000f),
+				10, (int) height - 90);
+		if (isWin) {
+			font.draw(batch, "YOU WIN!",
+					(int) 10, (int) height - 110);
+		} else if (isLose) {
+			font.draw(batch, "YOU LOST!",
+					(int) 10, (int) height - 110);
+		}
+		batch.end();
 		
 		// sleep if current fps runs too fast
 		if (sleep > 0.0f) {
@@ -201,8 +219,8 @@ public class Debris extends InputAdapter implements ApplicationListener {
 			moveVector.x = (x - lastPosition.x); 
 			moveVector.y = -(y - lastPosition.y);
 			 
-			moveVector.x *= 250f;
-			moveVector.y *= 250f;
+			//moveVector.x *= 10f;
+			//moveVector.y *= 10f;
 			
 			//moveVector.x *= 1000f;
 			//moveVector.y *= 1000f;

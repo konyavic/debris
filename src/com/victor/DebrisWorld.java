@@ -61,7 +61,7 @@ public class DebrisWorld implements ContactListener {
 	}
 	
 	public void createPlayer() {
-		player = createDebrisBox(0, 100, 5, 10, 0, 0, 0);
+		player = createDebrisBox(0, DebrisParam.STAGE_HEIGHT/5f, DebrisParam.PLAYER_WIDTH, DebrisParam.PLAYER_HEIGHT, 0, 0, 0);
 	}
 	
 	public void movePlayer(Vector2 force) {
@@ -90,10 +90,10 @@ public class DebrisWorld implements ContactListener {
 			if (dice <= 0)
 				break;
 		}
-		int size = DebrisParam.DEBRIS_SIZE[i];
+		float size = DebrisParam.DEBRIS_SIZE[i];
 		
 		// randomize drop position
-		int x = (-DebrisParam.STAGE_WIDTH/2 + 30)
+		float x = (-DebrisParam.STAGE_WIDTH/2 + 30)
 			+ (int) (Math.random() * (DebrisParam.STAGE_WIDTH - 60));
 		
 		// randomize shape
@@ -116,7 +116,7 @@ public class DebrisWorld implements ContactListener {
 		door = createDebrisBox(0, DebrisParam.STAGE_HEIGHT, 20, 30, 0, 0, 0);
 	}
 
-	public Body createDebrisBox(int x, int y, int w, int h, int cx, int cy,
+	public Body createDebrisBox(float x, float y, float w, float h, float cx, float cy,
 			float angle) {
 		PolygonShape shape = new PolygonShape();
 		shape.setAsBox((float) w, (float) h,
@@ -125,7 +125,7 @@ public class DebrisWorld implements ContactListener {
 		return createDebris(x, y, shape);
 	}
 
-	public Body createDebrisTriangle(int x, int y, int e) {
+	public Body createDebrisTriangle(float x, float y, float e) {
 		PolygonShape shape = new PolygonShape();
 		Vector2[] vlist = { new Vector2(0f, 0f),
 				new Vector2(e * 0.5f, -e * 0.866f), new Vector2((float) e, 0f) };
@@ -134,14 +134,14 @@ public class DebrisWorld implements ContactListener {
 		return createDebris(x, y, shape);
 	}
 
-	public Body createDebrisCircle(int x, int y, int radius) {
+	public Body createDebrisCircle(float x, float y, float radius) {
 		CircleShape shape = new CircleShape();
 		shape.setRadius(radius);
 
 		return createDebris(x, y, shape);
 	}
 
-	public Body createDebris(int x, int y, Shape shape) {
+	public Body createDebris(float x, float y, Shape shape) {
 		BodyDef bd = new BodyDef();
 		bd.position.set((float) x, (float) y);
 
@@ -160,7 +160,7 @@ public class DebrisWorld implements ContactListener {
 	
 	public void createFloor() {
 		PolygonShape wallshape = new PolygonShape();
-		wallshape.setAsBox(DebrisParam.STAGE_WIDTH/2f, 15f, new Vector2(0f, 0f), 0f);
+		wallshape.setAsBox(DebrisParam.STAGE_WIDTH/2f, DebrisParam.WALL_WIDTH, new Vector2(0f, 0f), 0f);
 
 		FixtureDef fd = new FixtureDef();
 		fd.shape = wallshape;
@@ -176,7 +176,7 @@ public class DebrisWorld implements ContactListener {
 	
 	public void createLeftWall() {
 		PolygonShape wallshape = new PolygonShape();
-		wallshape.setAsBox(15f, DebrisParam.STAGE_HEIGHT/2f, new Vector2(0f, DebrisParam.STAGE_HEIGHT/2f), 0f);
+		wallshape.setAsBox(DebrisParam.WALL_WIDTH, DebrisParam.STAGE_HEIGHT/2f, new Vector2(0f, DebrisParam.STAGE_HEIGHT/2f), 0f);
 
 		FixtureDef fd = new FixtureDef();
 		fd.shape = wallshape;
@@ -192,7 +192,7 @@ public class DebrisWorld implements ContactListener {
 	
 	public void createRightWall() {
 		PolygonShape wallshape = new PolygonShape();
-		wallshape.setAsBox(15f, DebrisParam.STAGE_HEIGHT/2f, new Vector2(0f, DebrisParam.STAGE_HEIGHT/2f), 0f);
+		wallshape.setAsBox(DebrisParam.WALL_WIDTH, DebrisParam.STAGE_HEIGHT/2f, new Vector2(0f, DebrisParam.STAGE_HEIGHT/2f), 0f);
 
 		FixtureDef fd = new FixtureDef();
 		fd.shape = wallshape;
