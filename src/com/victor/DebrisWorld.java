@@ -95,12 +95,20 @@ public class DebrisWorld implements ContactListener {
 	}
 	
 	public void createPlayer() {
-		player = createDebrisBox(0, DebrisParam.STAGE_HEIGHT/5f, DebrisParam.PLAYER_WIDTH, DebrisParam.PLAYER_HEIGHT, 0, 0, 0);
+		player = createDebrisCircle(0, DebrisParam.STAGE_HEIGHT/5f, DebrisParam.PLAYER_SIZE);
 	}
 	
 	public void movePlayer(Vector2 force) {
 		//player.applyForce(force, player.getWorldCenter());
 		player.applyLinearImpulse(force, player.getWorldCenter());
+	}
+	
+	public Body getPlayer() {
+		return player;
+	}
+	
+	public Body getDoor() {
+		return door;
 	}
 	
 	public Vector2 getPlayerPosition() {
@@ -131,6 +139,7 @@ public class DebrisWorld implements ContactListener {
 			+ (float) (Math.random() * (DebrisParam.STAGE_WIDTH - DebrisParam.WALL_WIDTH));
 		
 		// randomize shape
+		/*
 		int type = (int) (Math.random() * 3);
 		Body body = null;
 		if (type == 0) {
@@ -142,7 +151,9 @@ public class DebrisWorld implements ContactListener {
 		} else {
 			// should not reach here
 		}
-		
+		*/
+		Body body = createDebrisBox(x, DebrisParam.STAGE_HEIGHT, size, size, 0, 0, 0);
+		body.setUserData(size);
 		return body;
 	}
 	
@@ -201,7 +212,7 @@ public class DebrisWorld implements ContactListener {
 		wallshape.setAsBox(
 				DebrisParam.STAGE_WIDTH/2f, 
 				DebrisParam.WALL_WIDTH, 
-				new Vector2(0f, 0f), 0f);
+				new Vector2(0f, DebrisParam.WALL_WIDTH), 0f);
 
 		FixtureDef fd = new FixtureDef();
 		fd.shape = wallshape;
@@ -219,8 +230,8 @@ public class DebrisWorld implements ContactListener {
 		PolygonShape wallshape = new PolygonShape();
 		wallshape.setAsBox(
 				DebrisParam.WALL_WIDTH, 
-				DebrisParam.WALL_HEIGHT/2f, 
-				new Vector2(0f, DebrisParam.WALL_HEIGHT/2f), 0f);
+				DebrisParam.WALL_HEIGHT, 
+				new Vector2(-DebrisParam.WALL_WIDTH, DebrisParam.WALL_HEIGHT), 0f);
 
 		FixtureDef fd = new FixtureDef();
 		fd.shape = wallshape;
@@ -238,8 +249,8 @@ public class DebrisWorld implements ContactListener {
 		PolygonShape wallshape = new PolygonShape();
 		wallshape.setAsBox(
 				DebrisParam.WALL_WIDTH, 
-				DebrisParam.WALL_HEIGHT/2f, 
-				new Vector2(0f, DebrisParam.WALL_HEIGHT/2f), 0f);
+				DebrisParam.WALL_HEIGHT, 
+				new Vector2(DebrisParam.WALL_WIDTH, DebrisParam.WALL_HEIGHT), 0f);
 
 		FixtureDef fd = new FixtureDef();
 		fd.shape = wallshape;

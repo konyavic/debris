@@ -33,14 +33,21 @@ public class Debris extends InputAdapter implements ApplicationListener {
 
 	boolean jumping = false;
 	
-	TextureRegion textureRegion;
+	TextureRegion textDebris;
+	TextureRegion textWall;
+	TextureRegion textPlayer;
+	TextureRegion textDoor;
 
 	@Override
 	public void create() {
 		font = new BitmapFont();
+		font.setScale(1.5f);
 		font.setColor(Color.WHITE);
-		// texture = new Texture(Gdx.files.internal("data/badlogic.jpg"));
-		textureRegion = new TextureRegion(new Texture(Gdx.files.internal("data/tmp.jpg")));
+		
+		textDebris = new TextureRegion(new Texture(Gdx.files.internal("data/tmp.jpg")));
+		textWall = new TextureRegion(new Texture(Gdx.files.internal("data/brick.jpg")));
+		textPlayer = new TextureRegion(new Texture(Gdx.files.internal("data/player.jpg")));
+		textDoor = new TextureRegion(new Texture(Gdx.files.internal("data/exit.jpg")));
 		
 		batch = new SpriteBatch();
 
@@ -71,30 +78,81 @@ public class Debris extends InputAdapter implements ApplicationListener {
 
 		// center to player
 		Vector2 position = world.getPlayerPosition();
-		camera.position.set(position.x, 10f, 0);
+		camera.position.set(position.x, position.y, 0);
 		batch.getProjectionMatrix().set(camera.combined);
 		batch.begin();
 		
+		// draw player
+		Body player = world.getPlayer();
+		Vector2 playerPosition = player.getPosition();
+		float playerAngle = MathUtils.radiansToDegrees * player.getAngle();
+		batch.draw(textPlayer, 
+				playerPosition.x - DebrisParam.PLAYER_SIZE,
+				playerPosition.y - DebrisParam.PLAYER_SIZE,
+				DebrisParam.PLAYER_SIZE, DebrisParam.PLAYER_SIZE,
+				DebrisParam.PLAYER_SIZE * 2, DebrisParam.PLAYER_SIZE * 2, 
+				1, 1,
+				playerAngle);
+		
+		// draw walls
+		float x, y;
+		float brickSize = (float) DebrisParam.WALL_WIDTH*2;
+		for(x = 0f; x < DebrisParam.WALL_WIDTH*2; x += brickSize) {
+			for(y = 0f; y < DebrisParam.WALL_HEIGHT*2; y += brickSize) {
+				batch.draw(textWall, 
+						-DebrisParam.STAGE_WIDTH/2f - DebrisParam.WALL_WIDTH*2 + x, 
+						y, 
+						brickSize, brickSize);
+				batch.draw(textWall, 
+						DebrisParam.STAGE_WIDTH/2f + x, 
+						y, 
+						brickSize, brickSize);
+			}
+		}
+		for(x = -DebrisParam.STAGE_WIDTH/2f; x < DebrisParam.STAGE_WIDTH/2f; x += brickSize) {
+			batch.draw(textWall, 
+					x, 0f, 
+					brickSize, brickSize);
+		}
+		
+		// draw debris
 		for (Body d : world.getDebrisList()) {
 			Vector2 bodyPosition = d.getPosition(); // that's the box's center position
-			float angle = MathUtils.radiansToDegrees * d.getAngle(); // the rotation angle around the center
-			batch.draw(textureRegion, 
-					bodyPosition.x - 1, bodyPosition.y - 1, // the bottom left corner of the box, unrotated
-						  1f, 1f, // the rotation center relative to the bottom left corner of the box
-						  2, 2, // the width and height of the box
+			float size = (Float) d.getUserData();
+			float debrisAngle = MathUtils.radiansToDegrees * d.getAngle(); // the rotation angle around the center
+			batch.draw(textDebris, 
+					bodyPosition.x - size, bodyPosition.y - size, // the bottom left corner of the box, unrotated
+						  size, size, // the rotation center relative to the bottom left corner of the box
+						  size*2, size*2, // the width and height of the box
 						  1, 1, // the scale on the x- and y-axis
-						  angle); // the rotation angle
+						  debrisAngle); // the rotation angle
 		}
+		
+		// draw exit door
+		Body door = world.getDoor();
+		if (door != null) {
+			Vector2 doorPosition = door.getPosition();
+			float doorAngle = MathUtils.radiansToDegrees * door.getAngle();
+			batch.draw(textDoor, 
+					doorPosition.x - DebrisParam.DOOR_WIDTH,
+					doorPosition.y - DebrisParam.DOOR_HEIGHT,
+					DebrisParam.DOOR_WIDTH, DebrisParam.DOOR_HEIGHT,
+					DebrisParam.DOOR_WIDTH * 2, DebrisParam.DOOR_HEIGHT * 2, 
+					1, 1,
+					doorAngle);
+		}
+
 		batch.end();
 
 		// render debug shape
-		world.renderDebug();
+		//world.renderDebug();
 
 		// render text
 		batch.getProjectionMatrix().setToOrtho2D(
 				0, 0, 
 				Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 		batch.begin();
+		
 		batch.setColor(Color.WHITE);
 		font.draw(batch, "FPS = " + Gdx.graphics.getFramesPerSecond(), 10,
 				(int) height - 10);
@@ -108,6 +166,7 @@ public class Debris extends InputAdapter implements ApplicationListener {
 			font.draw(batch, "YOU ARE DEAD!", 
 					10, (int) height - 50);
 		}
+		
 		batch.end();
 
 		// sleep if current FPS runs too fast
