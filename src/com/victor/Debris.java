@@ -10,38 +10,35 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.utils.MathUtils;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 
 public class Debris extends InputAdapter implements ApplicationListener {
 
-	SpriteBatch batch;
-	BitmapFont font;
+	// members for rendering
+	protected SpriteBatch batch;
+	protected BitmapFont font;
+	protected OrthographicCamera camera;
 
-	DebrisWorld world;
+	// the Box2D world
+	protected DebrisWorld world;
 
-	Vector2 lastPosition = null;
-	Vector2 impulse = new Vector2();
-
-	OrthographicCamera camera;
-
-	int width;
-	int height;
-
-	boolean jumping = false;
+	// player control
+	protected Vector2 lastPosition = null;
+	protected Vector2 impulse = new Vector2();
+	protected boolean jumping = false;
 	
-	TextureRegion textDebris;
-	TextureRegion textWall;
-	TextureRegion textPlayer;
-	TextureRegion textDoor;
+	// textures
+	protected TextureRegion textDebris;
+	protected TextureRegion textWall;
+	protected TextureRegion textPlayer;
+	protected TextureRegion textDoor;
 
 	@Override
 	public void create() {
 		font = new BitmapFont();
-		font.setScale(1.5f);
+		font.setScale(2.0f);
 		font.setColor(Color.WHITE);
 		
 		textDebris = new TextureRegion(new Texture(Gdx.files.internal("data/tmp.jpg")));
@@ -76,15 +73,14 @@ public class Debris extends InputAdapter implements ApplicationListener {
 		camera.apply(gl);
 		gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
 
-		// center to player
-		Vector2 position = world.getPlayerPosition();
-		camera.position.set(position.x, position.y, 0);
+		// center to player		
+		Body player = world.getPlayer();
+		Vector2 playerPosition = player.getPosition();
+		camera.position.set(playerPosition.x, playerPosition.y, 0);
 		batch.getProjectionMatrix().set(camera.combined);
 		batch.begin();
 		
 		// draw player
-		Body player = world.getPlayer();
-		Vector2 playerPosition = player.getPosition();
 		float playerAngle = MathUtils.radiansToDegrees * player.getAngle();
 		batch.draw(textPlayer, 
 				playerPosition.x - DebrisParam.PLAYER_SIZE,
@@ -148,6 +144,7 @@ public class Debris extends InputAdapter implements ApplicationListener {
 		//world.renderDebug();
 
 		// render text
+		int height = Gdx.graphics.getHeight();
 		batch.getProjectionMatrix().setToOrtho2D(
 				0, 0, 
 				Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -157,14 +154,15 @@ public class Debris extends InputAdapter implements ApplicationListener {
 		font.draw(batch, "FPS = " + Gdx.graphics.getFramesPerSecond(), 10,
 				(int) height - 10);
 		font.draw(batch, "time = " + String.format("%.2f", world.getTimeLeft() / 1000f),
-				10, (int) height - 30);
+				10, (int) height - 35);
+		
 		DebrisWorld.State state = world.getState();
 		if (state == DebrisWorld.State.WIN) {
 			font.draw(batch, "YOU WIN!", 
-					10, (int) height - 50);
+					10, (int) height - 60);
 		} else if (state == DebrisWorld.State.DEAD) {
 			font.draw(batch, "YOU ARE DEAD!", 
-					10, (int) height - 50);
+					10, (int) height - 60);
 		}
 		
 		batch.end();
@@ -182,8 +180,7 @@ public class Debris extends InputAdapter implements ApplicationListener {
 
 	@Override
 	public void resize(int width, int height) {
-		this.width = width;
-		this.height = height;
+
 	}
 
 	@Override
@@ -228,7 +225,9 @@ public class Debris extends InputAdapter implements ApplicationListener {
 					DebrisParam.SCREEN_TO_WORLD / Gdx.graphics.getWidth());
 			impulse.y = impulse.y * (
 					DebrisParam.SCREEN_TO_WORLD / Gdx.graphics.getHeight());
-			world.movePlayer(impulse);
+			
+			if (world.getState() != DebrisWorld.State.DEAD)
+				world.movePlayer(impulse);
 		}
 
 		return false;

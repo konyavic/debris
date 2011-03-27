@@ -8,7 +8,6 @@ import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactListener;
-import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.Shape;
@@ -60,6 +59,7 @@ public class DebrisWorld implements ContactListener {
 		
 		if (timeLeft <= 0f) {
 			state = State.DEAD;
+			return;
 		}
 		
 		if (timeDrop >= DebrisParam.DROP_INTERVAL
@@ -111,14 +111,6 @@ public class DebrisWorld implements ContactListener {
 		return door;
 	}
 	
-	public Vector2 getPlayerPosition() {
-		return player.getPosition();
-	}
-	
-	public Vector2 getPlayerVelocity() {
-		return player.getLinearVelocity();
-	}
-	
 	public boolean isPlayerJumpable() {
 		return countContact > 0;
 	}
@@ -152,14 +144,15 @@ public class DebrisWorld implements ContactListener {
 			// should not reach here
 		}
 		*/
-		Body body = createDebrisBox(x, DebrisParam.STAGE_HEIGHT, size, size, 0, 0, 0);
+		
+		Body body = createDebrisBox(x, DebrisParam.STAGE_HEIGHT*1.5f, size, size, 0, 0, 0);
 		body.setUserData(size);
 		return body;
 	}
 	
 	public void createDoor() {
 		door = createDebrisBox(0, 
-				DebrisParam.STAGE_HEIGHT, 
+				DebrisParam.STAGE_HEIGHT*2f, 
 				DebrisParam.DOOR_WIDTH, 
 				DebrisParam.DOOR_HEIGHT, 
 				0, 0, 0);
