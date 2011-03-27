@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.BodyDef;
 
 public class Debris extends InputAdapter implements ApplicationListener {
 
@@ -34,10 +35,11 @@ public class Debris extends InputAdapter implements ApplicationListener {
 	public static final float DEBRIS_INTERVAL = 1000f;	// msecs per fall 
 	float timeFall = DEBRIS_INTERVAL;
 	
-	public static float MOVE_INTERVAL = 100f;	// apply force for msecs
+	public static float MOVE_INTERVAL = 200f;	// apply force for msecs
 	float timeMove = 0;
 	
 	int countDebris = 30;
+	int countFreeze = -5;
 	boolean stopped = false;
 	boolean isWin = false;
 	boolean isLose = false;
@@ -53,24 +55,29 @@ public class Debris extends InputAdapter implements ApplicationListener {
 		world.reset();
 		Gdx.input.setInputProcessor(this);
 
-		translation_x = (int) (DebrisWorld.WIDTH / 2f);
+		translation_x = (int) (DebrisParam.STAGE_WIDTH / 2f);
 		transform.setToTranslation(translation_x, 0f, 0f);
 	}
 
 	@Override
 	public void render() {
+		float delta = Gdx.graphics.getDeltaTime() * 1000; // in milliseconds
+		float sleep = 1000f/DebrisParam.FPS - delta;
+		
 		//
 		// Model
-		//	
+		//
 		if (!isWin && !isLose) {
-			float delta = Gdx.graphics.getDeltaTime() * 1000; // in msecs
+			
 			countDown -= delta;
-			world.tick((long) (delta * 6), 6);
+			world.tick(delta);
 
+			/*
 			if (timeMove >= 0) {
-				timeMove -= delta;
+				timeMove -= delta; // wrong?
 				world.movePlayer(moveVector);
 			}
+			*/
 
 			// debris fall
 			timeFall += delta;
@@ -78,6 +85,10 @@ public class Debris extends InputAdapter implements ApplicationListener {
 				timeFall = 0f;
 				world.createDebrisRandom();
 				countDebris -= 1;
+				if (countFreeze >= 0) {
+					world.getDebrisList().get(countFreeze).setType(BodyDef.BodyType.StaticBody);
+				}
+				countFreeze += 1;
 			}
 
 			if (countDebris == 0 && !stopped) {
@@ -85,7 +96,7 @@ public class Debris extends InputAdapter implements ApplicationListener {
 				world.createDoor();
 			}
 			
-			if (world.isWin()) {
+			if (world.getState() == DebrisWorld.State.WIN) {
 				isWin = true;
 			}
 			
@@ -110,11 +121,13 @@ public class Debris extends InputAdapter implements ApplicationListener {
 		spriteBatch.begin();
 		spriteBatch.setColor(Color.WHITE);
 		Vector2 v = world.getPlayerVelocity();
-		font.draw(spriteBatch, "v = " + v.len(), (int) -translation + 50,
-				(int) height - 50);
+		font.draw(spriteBatch, "delta = " + String.format("%.2f", delta), 
+				(int) -translation + 50, (int) height - 50);
+		font.draw(spriteBatch, "sleep = " + String.format("%.2f", sleep), 
+				(int) -translation + 150, (int) height - 50);
 		font.draw(spriteBatch, "fps = " + Gdx.graphics.getFramesPerSecond(),
 				(int) -translation + 50, (int) height - 70);
-		font.draw(spriteBatch, "time = " + countDown,
+		font.draw(spriteBatch, "time = " + String.format("%.2f", countDown/1000f),
 				(int) -translation + 50, (int) height - 90);
 		if (isWin) {
 			font.draw(spriteBatch, "YOU WIN!",
@@ -132,6 +145,15 @@ public class Debris extends InputAdapter implements ApplicationListener {
 		// render debug shape
 		world.renderDebug();
 		
+		// sleep if current fps runs too fast
+		if (sleep > 0.0f) {
+			try {
+				Thread.sleep((long) sleep);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
 	}
 
 	@Override
@@ -181,6 +203,10 @@ public class Debris extends InputAdapter implements ApplicationListener {
 			 
 			moveVector.x *= 250f;
 			moveVector.y *= 250f;
+			
+			//moveVector.x *= 1000f;
+			//moveVector.y *= 1000f;
+			world.movePlayer(moveVector);
 			
 			timeMove = MOVE_INTERVAL;
 		}
